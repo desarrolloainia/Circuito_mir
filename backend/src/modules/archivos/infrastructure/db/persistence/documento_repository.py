@@ -1,5 +1,6 @@
-import select
-import uuid
+from uuid import UUID
+
+from sqlalchemy import select
 
 from modules.archivos.domain.entities.documento import Documento
 from modules.archivos.infrastructure.db.entities.documento import DocumentoORM
@@ -35,8 +36,8 @@ def _to_orm(documento: Documento) -> DocumentoORM:
         creado_por=documento.creado_por,
     )
 
-class DocumentoRepositorySqlAlchemy:
 
+class DocumentoRepositorySqlAlchemy:
     def __init__(self, uow: UnitOfWork) -> None:
         self.uow = uow
 
@@ -51,37 +52,12 @@ class DocumentoRepositorySqlAlchemy:
         """
         documento_orm = _to_orm(documento)
         self.uow.session.add(documento_orm)
-        await self.uow.commit()
-        return _to_domain(documento_orm)
+        return documento
 
-    async def delete(self, id: int) -> None:
-        """Elimina un documento por su identificador."""
+    async def update(self, documento: Documento) -> Documento:
+        """Actualiza los metadatos de un documento sin confirmar la transacción."""
 
-        documento_orm = await self.uow.session.get(DocumentoORM, id)
-
-        if documento_orm is None:
-            raise ValueError(f"Documento con id {id} no encontrado")
-
-        await self.uow.session.delete(documento_orm)
-
-    async def get_all(self) -> list[Documento]:
-        """Obtiene todos los documentos de la base de datos."""
-
-        result = await self.uow.session.execute(select(DocumentoORM))
-
-        return [_to_domain(documento) for documento in result.scalars().all()]
-
-    async def edit(self, documento: Documento) -> Documento:
-        """Edita un documento en la base de datos.
-
-        Args:
-            documento (Documento): Documento a editar.
-
-        Returns:
-            Documento: Documento editado.
-        """
         documento_orm = await self.uow.session.get(DocumentoORM, documento.id)
-
         if documento_orm is None:
             raise ValueError(f"Documento con id {documento.id} no encontrado")
 
@@ -89,11 +65,28 @@ class DocumentoRepositorySqlAlchemy:
         documento_orm.tipo = documento.tipo
         documento_orm.storage_id = documento.storage_id
         documento_orm.creado_por = documento.creado_por
+        return documento
 
-        await self.uow.commit()
+    async def delete(self, documento_id: UUID) -> None:
+        """Elimina un documento por su identificador."""
 
-        return _to_domain(documento_orm)
+        documento_orm = await self.uow.session.get(DocumentoORM, documento_id)
 
+        if documento_orm is not None:
+            await self.uow.session.delete(documento_orm)
 
+    async def get_by_id(self, documento_id: UUID) -> Documento | None:
+        """Obtiene un documento por su identificador."""
 
+        result = await self.uow.session.execute(
+            select(DocumentoORM).where(DocumentoORM.id == documento_id)
+        )
+        documento_orm = result.scalar_one_or_none()
+        return _to_domain(documento_orm) if documento_orm else None
 
+    async def get_all(self) -> list[Documento]:
+        """Obtiene todos los documentos de la base de datos."""
+
+        result = await self.uow.session.execute(select(DocumentoORM))
+
+        return [_to_domain(documento) for documento in result.scalars().all()]

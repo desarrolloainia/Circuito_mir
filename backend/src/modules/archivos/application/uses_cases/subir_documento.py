@@ -2,9 +2,10 @@ import logging
 from uuid import UUID
 
 from modules.archivos.application.ports.file_storage import FileStoragePort
-from modules.archivos.domain.Enum.estado_documetno import TipoDocumento
 from modules.archivos.domain.entities.documento import Documento
+from modules.archivos.domain.Enum.estado_documetno import TipoDocumento
 from modules.archivos.domain.repository.documento_repository import DocumentoRepository
+from shared.uow import UnitOfWork
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ async def subir_documento(
     creado_por: UUID,
     storage: FileStoragePort,
     repositorio: DocumentoRepository,
+    uow: UnitOfWork,
 ) -> Documento:
     """Sube el archivo a storage y persiste el Documento resultante.
 
@@ -34,7 +36,10 @@ async def subir_documento(
     )
 
     try:
-        return await repositorio.save(documento)
+        async with uow:
+            documento = await repositorio.save(documento)
+            await uow.commit()
+            return documento
     except Exception:
         logger.exception(
             "Fallo al guardar Documento tras subir %s (storage_id=%s); revirtiendo archivo",

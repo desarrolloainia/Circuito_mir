@@ -1,4 +1,5 @@
 from types import TracebackType
+from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -11,8 +12,9 @@ class UnitOfWork:
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession] = AsyncSessionLocal) -> None:
         self._session_factory = session_factory
+        self.session: AsyncSession
 
-    async def __aenter__(self) -> UnitOfWork:
+    async def __aenter__(self) -> Self:
         self.session = self._session_factory()
         return self
 
@@ -22,8 +24,10 @@ class UnitOfWork:
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
-        await self.rollback()
-        await self.session.close()
+        try:
+            await self.rollback()
+        finally:
+            await self.session.close()
 
     async def commit(self) -> None:
         await self.session.commit()
