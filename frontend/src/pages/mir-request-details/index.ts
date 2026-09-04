@@ -1,0 +1,1 @@
+export { default as MirRequestDetailsPage } from "./ui/MirRequestDetailsPage.vue";
