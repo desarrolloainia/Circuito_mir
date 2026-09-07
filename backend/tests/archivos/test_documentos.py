@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
+from modules.archivos.api.dto import DocumentoDTO, EditarDocumentoDTO
 from pydantic import ValidationError
 
-from modules.archivos.api.dto import DocumentoDTO, EditarDocumentoDTO
 from modules.archivos.application.ports.file_storage import (
     ArchivoSubido,
     FileStorageNotFoundError,
@@ -365,13 +365,16 @@ def test_documento_dto_acepta_entidad_de_dominio():
 
 def test_repositorio_save_agrega_sin_commit():
     doc = documento()
-    uow = SimpleNamespace(session=SimpleNamespace(add=Mock()), commit=AsyncMock())
+    uow = SimpleNamespace(
+        session=SimpleNamespace(add=Mock(), flush=AsyncMock()), commit=AsyncMock()
+    )
     repositorio = DocumentoRepositorySqlAlchemy(uow)
 
     resultado = run(repositorio.save(doc))
 
     assert resultado is doc
     assert isinstance(uow.session.add.call_args.args[0], DocumentoORM)
+    uow.session.flush.assert_awaited_once()
     uow.commit.assert_not_awaited()
 
 

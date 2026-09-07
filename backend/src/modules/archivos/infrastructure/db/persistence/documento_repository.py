@@ -7,7 +7,7 @@ from modules.archivos.infrastructure.db.entities.documento import DocumentoORM
 from shared.uow import UnitOfWork
 
 
-def _to_domain(documento_orm: DocumentoORM) -> Documento:
+def to_domain(documento_orm: DocumentoORM) -> Documento:
     """Convierte una entidad ORM en una entidad de dominio.
 
     Mantiene desacoplada la capa de persistencia de la capa de dominio,
@@ -22,7 +22,7 @@ def _to_domain(documento_orm: DocumentoORM) -> Documento:
     )
 
 
-def _to_orm(documento: Documento) -> DocumentoORM:
+def to_orm(documento: Documento) -> DocumentoORM:
     """Convierte una entidad de dominio en una entidad ORM.
 
     Transforma el modelo de dominio al modelo utilizado por
@@ -50,8 +50,9 @@ class DocumentoRepositorySqlAlchemy:
         Returns:
             Documento: Documento guardado.
         """
-        documento_orm = _to_orm(documento)
+        documento_orm = to_orm(documento)
         self.uow.session.add(documento_orm)
+        await self.uow.session.flush()
         return documento
 
     async def update(self, documento: Documento) -> Documento:
@@ -82,11 +83,11 @@ class DocumentoRepositorySqlAlchemy:
             select(DocumentoORM).where(DocumentoORM.id == documento_id)
         )
         documento_orm = result.scalar_one_or_none()
-        return _to_domain(documento_orm) if documento_orm else None
+        return to_domain(documento_orm) if documento_orm else None
 
     async def get_all(self) -> list[Documento]:
         """Obtiene todos los documentos de la base de datos."""
 
         result = await self.uow.session.execute(select(DocumentoORM))
 
-        return [_to_domain(documento) for documento in result.scalars().all()]
+        return [to_domain(documento) for documento in result.scalars().all()]

@@ -11,8 +11,12 @@ from shared.database import Base
 class DocumentoORM(Base):
     __tablename__ = "documentos"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     nombre: Mapped[str] = mapped_column(nullable=False)
-    tipo: Mapped[TipoDocumento] = mapped_column(SqlEnum(TipoDocumento), nullable=False)
+    tipo: Mapped[TipoDocumento] = mapped_column(
+        SqlEnum(TipoDocumento, name="tipo_documento"), nullable=False
+    )
     storage_id: Mapped[str] = mapped_column(nullable=False)
     creado_por: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)

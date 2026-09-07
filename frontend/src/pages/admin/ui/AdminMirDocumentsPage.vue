@@ -1,40 +1,32 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { mirDocuments } from '../model/mir'
-import type { MirDocument } from '../model/mir'
+import { obtenerDocumentos } from '@/entities/archivos'
+import type { DocumentoDTO } from '@/entities/archivos'
 
 const route = useRoute()
 const search = ref<string>('')
-const selectedCompany = ref<string>('Todas las empresas')
 const selectedType = ref<string>('Todos los tipos')
 
-const columns: TableColumn<MirDocument>[] = [
-  { accessorKey: 'name', header: 'Documento', meta: { class: { th: 'w-[50%] md:w-[28%]', td: 'w-[50%] md:w-[28%]' } } },
-  { accessorKey: 'reference', header: 'MIR', meta: { class: { th: 'w-[25%] md:w-[14%]', td: 'w-[25%] md:w-[14%]' } } },
-  { accessorKey: 'company', header: 'Empresa', meta: { class: { th: 'hidden w-[18%] md:table-cell', td: 'hidden w-[18%] md:table-cell' } } },
-  { accessorKey: 'type', header: 'Tipo', meta: { class: { th: 'w-[25%] md:w-[10%]', td: 'w-[25%] md:w-[10%]' } } },
-  { accessorKey: 'uploadedBy', header: 'Subido por', meta: { class: { th: 'hidden w-[14%] md:table-cell', td: 'hidden w-[14%] md:table-cell' } } },
-  { accessorKey: 'date', header: 'Fecha', meta: { class: { th: 'hidden w-[11%] md:table-cell', td: 'hidden w-[11%] md:table-cell' } } },
-  { accessorKey: 'size', header: 'Tamaño', meta: { class: { th: 'hidden w-[5%] md:table-cell', td: 'hidden w-[5%] md:table-cell' } } }
+const { data: documentos } = await useAsyncData('archivos', () => obtenerDocumentos(), { default: () => [] })
+
+const columns: TableColumn<DocumentoDTO>[] = [
+  { accessorKey: 'nombre', header: 'Documento', meta: { class: { th: 'w-[70%]', td: 'w-[70%]' } } },
+  { accessorKey: 'tipo', header: 'Tipo', meta: { class: { th: 'w-[30%]', td: 'w-[30%]' } } }
 ]
 
-const companies: string[] = ['Todas las empresas', ...new Set(mirDocuments.map(document => document.company))]
-const documentTypes: string[] = ['Todos los tipos', ...new Set(mirDocuments.map(document => document.type))]
+const documentTypes: string[] = ['Todos los tipos', ...new Set(documentos.value.map(document => document.tipo))]
 
-const filteredDocuments = computed<MirDocument[]>(() => {
+const filteredDocuments = computed<DocumentoDTO[]>(() => {
   const query: string = search.value.trim().toLocaleLowerCase('es')
 
-  return mirDocuments.filter(document => (
-    (selectedCompany.value === 'Todas las empresas' || document.company === selectedCompany.value)
-    && (selectedType.value === 'Todos los tipos' || document.type === selectedType.value)
-    && (!query || [document.name, document.reference, document.company, document.uploadedBy]
-      .some(value => value.toLocaleLowerCase('es').includes(query)))
+  return documentos.value.filter(document => (
+    (selectedType.value === 'Todos los tipos' || document.tipo === selectedType.value)
+    && (!query || document.nombre.toLocaleLowerCase('es').includes(query))
   ))
 })
 
 watch(() => route.query.search, (query) => {
   search.value = typeof query === 'string' ? query : ''
-  selectedCompany.value = 'Todas las empresas'
   selectedType.value = 'Todos los tipos'
 }, { immediate: true })
 </script>
@@ -66,10 +58,10 @@ watch(() => route.query.search, (query) => {
             <div class="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
               <div>
                 <h2 class="text-base font-bold text-highlighted">
-                  {{ mirDocuments.length }} documentos
+                  {{ documentos.length }} documentos
                 </h2>
                 <p class="mt-0.5 text-sm text-muted">
-                  Localiza archivos por nombre, MIR o empresa
+                  Localiza archivos por nombre
                 </p>
               </div>
 
@@ -82,15 +74,6 @@ watch(() => route.query.search, (query) => {
                   color="neutral"
                   size="lg"
                   class="w-full xl:w-72"
-                />
-                <USelect
-                  v-model="selectedCompany"
-                  :items="companies"
-                  icon="i-lucide-building-2"
-                  color="neutral"
-                  size="lg"
-                  class="w-full xl:w-52"
-                  aria-label="Filtrar por empresa"
                 />
                 <USelect
                   v-model="selectedType"
@@ -118,7 +101,7 @@ watch(() => route.query.search, (query) => {
               td: 'px-2 py-3.5 text-sm text-default md:px-5'
             }"
           >
-            <template #name-cell="{ row }">
+            <template #nombre-cell="{ row }">
               <div class="flex min-w-0 items-center gap-3">
                 <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-orange-500/10 text-orange-400">
                   <UIcon
@@ -127,20 +110,14 @@ watch(() => route.query.search, (query) => {
                   />
                 </span>
                 <span class="min-w-0 truncate font-semibold text-highlighted">
-                  {{ row.original.name }}
+                  {{ row.original.nombre }}
                 </span>
               </div>
             </template>
 
-            <template #reference-cell="{ row }">
-              <span class="block truncate font-bold text-highlighted">
-                {{ row.original.reference }}
-              </span>
-            </template>
-
-            <template #type-cell="{ row }">
+            <template #tipo-cell="{ row }">
               <UBadge
-                :label="row.original.type"
+                :label="row.original.tipo"
                 color="neutral"
                 variant="subtle"
                 size="sm"

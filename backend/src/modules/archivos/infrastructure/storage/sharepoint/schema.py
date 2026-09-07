@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+## Esto se obtinene atraves de las variables de entorno
 class SharePointSettings(BaseSettings):
     """Configuracion del App Registration y del drive de SharePoint destino."""
 

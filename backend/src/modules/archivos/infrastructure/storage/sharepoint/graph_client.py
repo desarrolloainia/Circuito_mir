@@ -41,6 +41,12 @@ class SharePointGraphClient:
             raise RuntimeError("Microsoft Graph no devolvio el driveItem tras la subida")
         return drive_item
 
+    async def get_documentos(self) -> list[DriveItem]:
+        items = await self._client.drives.by_drive_id(self._drive_id).items.by_drive_item_id(self._root_folder_item_id).children.get()
+        if items is None:
+            raise RuntimeError("Microsoft Graph no devolvio items para el root folder")
+        return items.value or []
+
     async def download_content(self, item_id: str) -> bytes:
         content = await self._item(item_id).content.get()
         if content is None:

@@ -20,6 +20,7 @@ async def subir_documento(
     storage: FileStoragePort,
     repositorio: DocumentoRepository,
     uow: UnitOfWork,
+    gestionar_transaccion: bool = True,
 ) -> Documento:
     """Sube el archivo a storage y persiste el Documento resultante.
 
@@ -35,11 +36,16 @@ async def subir_documento(
         creado_por=creado_por,
     )
 
+    async def guardar() -> Documento:
+        if gestionar_transaccion:
+            async with uow:
+                resultado = await repositorio.save(documento)
+                await uow.commit()
+                return resultado
+        return await repositorio.save(documento)
+
     try:
-        async with uow:
-            documento = await repositorio.save(documento)
-            await uow.commit()
-            return documento
+        return await guardar()
     except Exception:
         logger.exception(
             "Fallo al guardar Documento tras subir %s (storage_id=%s); revirtiendo archivo",
@@ -49,5 +55,7 @@ async def subir_documento(
         try:
             await storage.eliminar(subido.storage_id)
         except Exception:
-            logger.exception("No se pudo revertir archivo huérfano storage_id=%s", subido.storage_id)
+            logger.exception(
+                "No se pudo revertir archivo huérfano storage_id=%s", subido.storage_id
+            )
         raise

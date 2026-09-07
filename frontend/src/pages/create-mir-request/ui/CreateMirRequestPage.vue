@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import { getLocalTimeZone, today } from "@internationalized/date";
 import type { CalendarDate } from "@internationalized/date";
-import { useMirRequests } from "@/entities/mir-request";
-import type { CreateMirRequestInput } from "@/entities/mir-request";
+import { crearMir } from "@/entities/mir";
+import type { CrearMirInput } from "@/entities/mir";
 import { formatDate } from "@/shared/lib";
 
 type ResolutionAnswer = "Sí" | "No";
 
 interface MirRequestFormState {
-  createdBy: string;
   detectionDate: CalendarDate;
-  detectedBy: string;
   description: string;
   resolved: ResolutionAnswer;
   attachments: File[];
@@ -21,17 +19,13 @@ interface MirRequestFormState {
   customerCode: string;
 }
 
-const currentUser = "PABLO SANTIAGO/AINIALAN";
 const maximumDetectionDate = today(getLocalTimeZone());
 const resolutionItems: ResolutionAnswer[] = ["No", "Sí"];
 const calendarOpen = ref<boolean>(false);
 const toast = useToast();
-const { createMirRequest } = useMirRequests();
 
 const formState = shallowReactive<MirRequestFormState>({
-  createdBy: currentUser,
   detectionDate: maximumDetectionDate,
-  detectedBy: currentUser,
   description: "",
   resolved: "No",
   attachments: [],
@@ -43,33 +37,37 @@ const formState = shallowReactive<MirRequestFormState>({
 });
 
 const submitRequest = async (): Promise<void> => {
-  const input: CreateMirRequestInput = {
-    createdBy: formState.createdBy,
-    detectionDate: formState.detectionDate.toString(),
-    detectedBy: formState.detectedBy.trim(),
-    description: formState.description.trim(),
-    resolved: formState.resolved === "Sí",
-    company: formState.company.trim(),
-    contactPerson: formState.contactPerson.trim(),
-    phone: formState.phone.trim(),
-    email: formState.email.trim(),
-    customerCode: formState.customerCode.trim(),
-    attachments: formState.attachments.map((file) => ({
-      name: file.name,
-      size: file.size,
-    })),
+  const input: CrearMirInput = {
+    descripcion: formState.description.trim(),
+    solucionado: formState.resolved === "Sí" ? "si" : "no",
+    nombre_empresa: formState.company.trim(),
+    nombre_persona_empresa: formState.contactPerson.trim(),
+    telefono_empresa: Number(formState.phone.replace(/\D/g, "")),
+    codigo_cliente: formState.customerCode.trim(),
+    correo_cliente: formState.email.trim(),
+    fecha_deteccion: formState.detectionDate.toString(),
   };
 
-  const request = createMirRequest(input);
+  try {
+    await crearMir(input, formState.attachments);
+  } catch {
+    toast.add({
+      title: "No se ha podido crear la MIR",
+      description: "Revisa los datos del formulario e inténtalo de nuevo.",
+      color: "error",
+      icon: "i-lucide-circle-x",
+    });
+    return;
+  }
 
   toast.add({
     title: "MIR creada",
-    description: `${request.reference} se ha registrado correctamente.`,
+    description: "La MIR se ha registrado correctamente.",
     color: "success",
     icon: "i-lucide-circle-check",
   });
 
-  await navigateTo(`/usuario/solicitudes/${request.id}`);
+  await navigateTo("/usuario/dashboard");
 };
 </script>
 
@@ -109,28 +107,17 @@ const submitRequest = async (): Promise<void> => {
               <fieldset class="space-y-5">
                 <legend class="mb-4 text-sm font-bold text-orange-400">Datos de detección</legend>
 
-                <div class="grid gap-5 sm:grid-cols-[minmax(0,1fr)_13rem]">
-                  <UFormField label="Usuario" name="createdBy">
-                    <UInput v-model="formState.createdBy" icon="i-lucide-user" size="lg" class="w-full" readonly />
-                  </UFormField>
+                <UFormField label="Fecha de detección" name="detectionDate" required>
+                  <UPopover v-model:open="calendarOpen">
+                    <UButton :label="formatDate(formState.detectionDate.toString())" icon="i-lucide-calendar-days"
+                      color="neutral" variant="outline" size="lg" class="w-full justify-start font-normal sm:w-64"
+                      aria-label="Seleccionar fecha de detección" />
 
-                  <UFormField label="Fecha de detección" name="detectionDate" required>
-                    <UPopover v-model:open="calendarOpen">
-                      <UButton :label="formatDate(formState.detectionDate.toString())" icon="i-lucide-calendar-days"
-                        color="neutral" variant="outline" size="lg" class="w-full justify-start font-normal"
-                        aria-label="Seleccionar fecha de detección" />
-
-                      <template #content>
-                        <UCalendar v-model="formState.detectionDate" :max-value="maximumDetectionDate" locale="es-ES"
-                          class="p-2" @update:model-value="calendarOpen = false" />
-                      </template>
-                    </UPopover>
-                  </UFormField>
-                </div>
-
-                <UFormField label="Persona que ha detectado la MIR" name="detectedBy" required>
-                  <UInput v-model="formState.detectedBy" icon="i-lucide-user-round-search"
-                    placeholder="Nombre de la persona" size="lg" class="w-full" maxlength="120" required />
+                    <template #content>
+                      <UCalendar v-model="formState.detectionDate" :max-value="maximumDetectionDate" locale="es-ES"
+                        class="p-2" @update:model-value="calendarOpen = false" />
+                    </template>
+                  </UPopover>
                 </UFormField>
 
                 <UFormField label="Descripción" name="description"
@@ -160,29 +147,29 @@ const submitRequest = async (): Promise<void> => {
                 </legend>
 
                 <div class="grid gap-5 sm:grid-cols-2">
-                  <UFormField label="Empresa" name="company">
+                  <UFormField label="Empresa" name="company" required>
                     <UInput v-model="formState.company" icon="i-lucide-building-2" placeholder="Nombre de la empresa"
-                      size="lg" class="w-full" maxlength="160" />
+                      size="lg" class="w-full" maxlength="160" required />
                   </UFormField>
 
-                  <UFormField label="Persona" name="contactPerson">
+                  <UFormField label="Persona" name="contactPerson" required>
                     <UInput v-model="formState.contactPerson" icon="i-lucide-contact" placeholder="Persona de contacto"
-                      size="lg" class="w-full" maxlength="120" />
+                      size="lg" class="w-full" maxlength="120" required />
                   </UFormField>
 
-                  <UFormField label="Teléfono" name="phone">
+                  <UFormField label="Teléfono" name="phone" required>
                     <UInput v-model="formState.phone" type="tel" icon="i-lucide-phone"
-                      placeholder="Teléfono de contacto" size="lg" class="w-full" maxlength="30" />
+                      placeholder="Teléfono de contacto" size="lg" class="w-full" maxlength="30" required />
                   </UFormField>
 
-                  <UFormField label="Código de cliente" name="customerCode">
+                  <UFormField label="Código de cliente" name="customerCode" required>
                     <UInput v-model="formState.customerCode" icon="i-lucide-hash" placeholder="Código de cliente"
-                      size="lg" class="w-full" maxlength="50" />
+                      size="lg" class="w-full" maxlength="50" required />
                   </UFormField>
 
-                  <UFormField label="Correo electrónico" name="email" class="sm:col-span-2">
+                  <UFormField label="Correo electrónico" name="email" class="sm:col-span-2" required>
                     <UInput v-model="formState.email" type="email" icon="i-lucide-mail" placeholder="correo@empresa.com"
-                      size="lg" class="w-full" maxlength="160" />
+                      size="lg" class="w-full" maxlength="160" required />
                   </UFormField>
                 </div>
               </fieldset>

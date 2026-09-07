@@ -12,6 +12,7 @@
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "typecheck": "nuxt typecheck",
+    "generate:api": "node scripts/generate-api-types.mjs",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck"
   },
   "dependencies": {
@@ -21,6 +22,7 @@
     "@internationalized/date": "^3.12.3",
     "@nuxt/ui": "^4.10.0",
     "nuxt": "^4.5.2",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

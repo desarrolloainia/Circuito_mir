@@ -15,6 +15,12 @@ export default defineNuxtConfig({
 
   srcDir: "src",
 
+  runtimeConfig: {
+    public: {
+      apiBase: "http://localhost:8000",
+    },
+  },
+
   routeRules: {
     "/usuario": { redirect: "/usuario/dashboard" },
     "/usuario/dashboard": { prerender: true },
