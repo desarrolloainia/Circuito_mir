@@ -19,6 +19,7 @@ def to_domain(documento_orm: DocumentoORM) -> Documento:
         tipo=documento_orm.tipo,
         storage_id=documento_orm.storage_id,
         creado_por=documento_orm.creado_por,
+        creado_en=documento_orm.creado_en,
     )
 
 
@@ -34,6 +35,7 @@ def to_orm(documento: Documento) -> DocumentoORM:
         tipo=documento.tipo,
         storage_id=documento.storage_id,
         creado_por=documento.creado_por,
+        creado_en=documento.creado_en,
     )
 
 

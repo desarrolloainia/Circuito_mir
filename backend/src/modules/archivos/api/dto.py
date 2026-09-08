@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -13,6 +14,7 @@ class DocumentoDTO(BaseModel):
     tipo: TipoDocumento
     storage_id: str
     creado_por: UUID
+    creado_en: datetime
 
 
 class EditarDocumentoDTO(BaseModel):

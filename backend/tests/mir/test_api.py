@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from main import app
 from modules.mir.api.dto import ActualizarMirDTO
 from modules.mir.api.router import USUARIO_TEMPORAL_ID, get_storage, get_uow
-from modules.mir.domain.entities.mir import Mir, Solucionado
+from modules.mir.domain.entities.mir import Mir, Prioridad, Solucionado
 
 
 def test_api_expone_crud_mir():
@@ -36,6 +36,7 @@ def test_crear_mir_acepta_datos_json_y_archivos_multipart(monkeypatch):
         solucionado=Solucionado.NO,
         archivos_adjuntos=[],
         nombre_empresa="Empresa",
+        prioridad=Prioridad.ALTA,
         nombre_persona_empresa="Ada",
         telefono_empresa=600123123,
         codigo_cliente="CLI-1",
@@ -56,6 +57,7 @@ def test_crear_mir_acepta_datos_json_y_archivos_multipart(monkeypatch):
                         "descripcion": creada.descripcion,
                         "solucionado": "no",
                         "nombre_empresa": creada.nombre_empresa,
+                        "prioridad": creada.prioridad.value,
                         "nombre_persona_empresa": creada.nombre_persona_empresa,
                         "telefono_empresa": creada.telefono_empresa,
                         "codigo_cliente": creada.codigo_cliente,
@@ -87,6 +89,7 @@ def test_actualizar_mir_dto_rechaza_documentos_repetidos():
             descripcion="Fallo",
             solucionado=Solucionado.NO,
             nombre_empresa="Empresa",
+            prioridad=Prioridad.MEDIA,
             nombre_persona_empresa="Ada",
             telefono_empresa=600123123,
             codigo_cliente="CLI-1",

@@ -5,13 +5,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from modules.archivos.api.dto import DocumentoDTO
 from modules.archivos.domain.Enum.estado_documetno import TipoDocumento
-from modules.mir.domain.entities.mir import Solucionado
+from modules.mir.domain.entities.mir import Prioridad, Solucionado
 
 
 class CrearMirDTO(BaseModel):
     descripcion: str = Field(min_length=1)
     solucionado: Solucionado
     nombre_empresa: str = Field(min_length=1, max_length=255)
+    prioridad: Prioridad
     nombre_persona_empresa: str = Field(min_length=1, max_length=255)
     telefono_empresa: int = Field(ge=0)
     codigo_cliente: str = Field(min_length=1, max_length=100)
@@ -24,6 +25,7 @@ class ActualizarMirDTO(BaseModel):
     descripcion: str = Field(min_length=1)
     solucionado: Solucionado
     nombre_empresa: str = Field(min_length=1, max_length=255)
+    prioridad: Prioridad
     nombre_persona_empresa: str = Field(min_length=1, max_length=255)
     telefono_empresa: int = Field(ge=0)
     codigo_cliente: str = Field(min_length=1, max_length=100)
@@ -46,6 +48,7 @@ class MirDTO(BaseModel):
     solucionado: Solucionado
     archivos_adjuntos: list[DocumentoDTO]
     nombre_empresa: str
+    prioridad: Prioridad
     nombre_persona_empresa: str
     telefono_empresa: int
     codigo_cliente: str

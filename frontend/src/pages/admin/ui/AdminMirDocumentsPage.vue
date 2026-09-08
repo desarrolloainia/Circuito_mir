@@ -10,8 +10,9 @@ const selectedType = ref<string>('Todos los tipos')
 const { data: documentos } = await useAsyncData('archivos', () => obtenerDocumentos(), { default: () => [] })
 
 const columns: TableColumn<DocumentoDTO>[] = [
-  { accessorKey: 'nombre', header: 'Documento', meta: { class: { th: 'w-[70%]', td: 'w-[70%]' } } },
-  { accessorKey: 'tipo', header: 'Tipo', meta: { class: { th: 'w-[30%]', td: 'w-[30%]' } } }
+  { accessorKey: 'nombre', header: 'Documento' },
+  { accessorKey: 'tipo', header: 'Tipo' },
+  { accessorKey: 'creado_en', header: 'Fecha de subida' }
 ]
 
 const documentTypes: string[] = ['Todos los tipos', ...new Set(documentos.value.map(document => document.tipo))]
@@ -122,6 +123,10 @@ watch(() => route.query.search, (query) => {
                 variant="subtle"
                 size="sm"
               />
+            </template>
+
+            <template #creado-en-cell="{ row }">
+              {{ row.original.creado_en.slice(0, 10) }}
             </template>
           </UTable>
         </UCard>

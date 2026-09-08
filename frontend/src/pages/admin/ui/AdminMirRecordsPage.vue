@@ -1,100 +1,105 @@
 <script setup lang="ts">
-import type { TableColumn, TabsItem } from '@nuxt/ui'
-import { closedMirRecords, pendingMirRecords } from '../model/mir'
-import type { MirQueue, MirRecord, MirView } from '../model/mir'
-
-type PendingFilter = 'all' | 'overdue' | MirQueue
+import type { TableColumn } from "@nuxt/ui";
+import { listarMir } from "@/entities/mir";
+import type { MirDTO } from "@/entities/mir";
+import type { MirView } from "../model/mir";
 
 const props = defineProps<{
-  view: MirView
-}>()
+  view: MirView;
+}>();
 
-const route = useRoute()
-const search = ref<string>('')
-const selectedFilter = ref<PendingFilter>('all')
-const selectedCompany = ref<string>('Todas las empresas')
+const route = useRoute();
+const search = ref<string>("");
+const selectedCompany = ref<string>("Todas las empresas");
 
-const columns: TableColumn<MirRecord>[] = [
-  { accessorKey: 'reference', header: 'Nº MIR', meta: { class: { th: 'w-[30%] md:w-[12%]', td: 'w-[30%] md:w-[12%]' } } },
-  { accessorKey: 'subject', header: 'Incidencia y empresa', meta: { class: { th: 'w-[45%] md:w-[26%]', td: 'w-[45%] md:w-[26%]' } } },
-  { accessorKey: 'queue', header: 'Pendiente de', meta: { class: { th: 'hidden w-[12%] md:table-cell', td: 'hidden w-[12%] md:table-cell' } } },
-  { accessorKey: 'owner', header: 'Responsable', meta: { class: { th: 'hidden w-[14%] md:table-cell', td: 'hidden w-[14%] md:table-cell' } } },
-  { accessorKey: 'executor', header: 'Ejecutor', meta: { class: { th: 'hidden w-[14%] md:table-cell', td: 'hidden w-[14%] md:table-cell' } } },
-  { accessorKey: 'priority', header: 'Prioridad', meta: { class: { th: 'w-[25%] md:w-[10%]', td: 'w-[25%] md:w-[10%]' } } },
-  { accessorKey: 'date', header: 'Fecha', meta: { class: { th: 'hidden w-[12%] md:table-cell', td: 'hidden w-[12%] md:table-cell' } } }
-]
+const { data: mir } = await useAsyncData("mir", () => listarMir(), { default: () => [] });
 
-const pageConfig = computed(() => props.view === 'pending'
-  ? {
-      title: 'MIR pendientes',
-      description: 'Incidencias que requieren seguimiento o actuación',
-      cardTitle: `${pendingMirRecords.length} MIR pendientes`,
-      cardDescription: 'Filtra por el punto del circuito en el que están pendientes',
-      records: pendingMirRecords
-    }
-  : {
-      title: 'MIR cerradas',
-      description: 'Histórico de incidencias y reclamaciones resueltas',
-      cardTitle: `${closedMirRecords.length} MIR cerradas`,
-      cardDescription: 'Consulta las resoluciones recientes por empresa o responsable',
-      records: closedMirRecords
-    })
+const columns: TableColumn<MirDTO>[] = [
+  {
+    accessorKey: "id",
+    header: "Nº MIR",
+    meta: { class: { th: "w-[30%] md:w-[22%]", td: "w-[30%] md:w-[22%]" } },
+  },
+  {
+    accessorKey: "descripcion",
+    header: "Incidencia y empresa",
+    meta: { class: { th: "w-[45%] md:w-[48%]", td: "w-[45%] md:w-[48%]" } },
+  },
+  {
+    accessorKey: "solucionado",
+    header: "Estado",
+    meta: { class: { th: "w-[25%] md:w-[12%]", td: "w-[25%] md:w-[12%]" } },
+  },
+  {
+    accessorKey: "prioridad",
+    header: "Prioridad",
+    meta: { class: { th: "hidden w-[12%] md:table-cell", td: "hidden w-[12%] md:table-cell" } },
+  },
+  {
+    accessorKey: "fecha_deteccion",
+    header: "Fecha",
+    meta: { class: { th: "hidden w-[12%] md:table-cell", td: "hidden w-[12%] md:table-cell" } },
+  },
+];
+
+const records = computed<MirDTO[]>(() =>
+  mir.value.filter((record) => record.solucionado === (props.view === "closed" ? "si" : "no")),
+);
+
+const pageConfig = computed(() =>
+  props.view === "pending"
+    ? {
+        title: "MIR pendientes",
+        description: "Incidencias que requieren seguimiento o actuación",
+        cardTitle: `${records.value.length} MIR pendientes`,
+        cardDescription: "Consulta las incidencias pendientes",
+      }
+    : {
+        title: "MIR cerradas",
+        description: "Histórico de incidencias y reclamaciones resueltas",
+        cardTitle: `${records.value.length} MIR cerradas`,
+        cardDescription: "Consulta las incidencias resueltas",
+      },
+);
 
 const companies = computed<string[]>(() => [
-  'Todas las empresas',
-  ...new Set(pageConfig.value.records.map(record => record.company))
-])
+  "Todas las empresas",
+  ...new Set(records.value.map((record) => record.nombre_empresa)),
+]);
 
-const pendingTabs = computed<TabsItem[]>(() => {
-  const filters: Array<{ label: string, value: PendingFilter }> = [
-    { label: 'Todas', value: 'all' },
-    { label: 'Del usuario', value: 'Usuario' },
-    { label: 'CAL', value: 'CAL' },
-    { label: 'Responsable', value: 'Responsable' },
-    { label: 'Ejecutor', value: 'Ejecutor' },
-    { label: '+7 días', value: 'overdue' },
-    { label: 'CAL C.E.', value: 'CAL C.E.' }
-  ]
+const filteredRecords = computed<MirDTO[]>(() => {
+  const query: string = search.value.trim().toLocaleLowerCase("es");
 
-  return filters.map(filter => ({
-    label: filter.label,
-    value: filter.value,
-    badge: filter.value === 'all'
-      ? pendingMirRecords.length
-      : pendingMirRecords.filter(record => filter.value === 'overdue'
-        ? record.daysOpen > 7
-        : record.queue === filter.value).length
-  }))
-})
-
-const filteredRecords = computed<MirRecord[]>(() => {
-  const query: string = search.value.trim().toLocaleLowerCase('es')
-
-  return pageConfig.value.records.filter((record) => {
-    if (selectedCompany.value !== 'Todas las empresas' && record.company !== selectedCompany.value) {
-      return false
+  return records.value.filter((record) => {
+    if (
+      selectedCompany.value !== "Todas las empresas" &&
+      record.nombre_empresa !== selectedCompany.value
+    ) {
+      return false;
     }
 
-    if (props.view === 'pending' && selectedFilter.value !== 'all') {
-      const matchesFilter: boolean = selectedFilter.value === 'overdue'
-        ? record.daysOpen > 7
-        : record.queue === selectedFilter.value
+    return (
+      !query ||
+      [
+        record.id,
+        record.descripcion,
+        record.nombre_empresa,
+        record.nombre_persona_empresa,
+        record.codigo_cliente,
+        record.correo_cliente,
+      ].some((value) => value.toLocaleLowerCase("es").includes(query))
+    );
+  });
+});
 
-      if (!matchesFilter) {
-        return false
-      }
-    }
-
-    return !query || [record.reference, record.subject, record.company, record.owner, record.executor, record.department]
-      .some(value => value.toLocaleLowerCase('es').includes(query))
-  })
-})
-
-watch([() => props.view, () => route.query.search], ([, query]) => {
-  search.value = typeof query === 'string' ? query : ''
-  selectedFilter.value = 'all'
-  selectedCompany.value = 'Todas las empresas'
-}, { immediate: true })
+watch(
+  [() => props.view, () => route.query.search],
+  ([, query]) => {
+    search.value = typeof query === "string" ? query : "";
+    selectedCompany.value = "Todas las empresas";
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -163,21 +168,6 @@ watch([() => props.view, () => route.query.search], ([, query]) => {
             </div>
           </template>
 
-          <div
-            v-if="view === 'pending'"
-            class="overflow-x-auto border-b border-default px-3 py-2.5 sm:px-4"
-          >
-            <UTabs
-              v-model="selectedFilter"
-              :items="pendingTabs"
-              :content="false"
-              color="primary"
-              variant="pill"
-              size="lg"
-              class="min-w-max"
-            />
-          </div>
-
           <UTable
             :data="filteredRecords"
             :columns="columns"
@@ -188,41 +178,42 @@ watch([() => props.view, () => route.query.search], ([, query]) => {
               root: 'overflow-x-auto md:max-h-[620px] md:overflow-auto',
               base: 'w-full table-fixed md:min-w-[1120px]',
               th: 'bg-mir-canvas px-2 py-3 text-xs font-semibold text-muted md:px-4',
-              td: 'px-2 py-3.5 text-sm text-default md:px-4'
+              td: 'px-2 py-3.5 text-sm text-default md:px-4',
             }"
           >
-            <template #reference-cell="{ row }">
+            <template #id-cell="{ row }">
               <span class="block truncate font-bold text-highlighted">
-                {{ row.original.reference }}
+                {{ row.original.id }}
               </span>
             </template>
 
-            <template #subject-cell="{ row }">
+            <template #descripcion-cell="{ row }">
               <div class="min-w-0">
                 <p class="whitespace-normal font-semibold leading-5 text-highlighted">
-                  {{ row.original.subject }}
+                  {{ row.original.descripcion }}
                 </p>
                 <p class="mt-0.5 truncate text-xs text-muted">
-                  {{ row.original.company }} · {{ row.original.department }}
+                  {{ row.original.nombre_empresa }} · {{ row.original.nombre_persona_empresa }}
                 </p>
               </div>
             </template>
 
-            <template #queue-cell="{ row }">
+            <template #solucionado-cell="{ row }">
               <UBadge
-                :label="row.original.queue"
-                color="neutral"
+                :label="row.original.solucionado === 'si' ? 'Cerrada' : 'Pendiente'"
+                :color="row.original.solucionado === 'si' ? 'success' : 'warning'"
                 variant="subtle"
                 size="sm"
               />
             </template>
 
-            <template #priority-cell="{ row }">
+            <template #prioridad-cell="{ row }">
               <UBadge
-                :label="row.original.priority"
-                :color="row.original.priorityTone"
+                :label="row.original.prioridad"
+                :color="row.original.prioridad === 'alta' ? 'error' : row.original.prioridad === 'media' ? 'warning' : 'neutral'"
                 variant="subtle"
                 size="sm"
+                class="capitalize"
               />
             </template>
           </UTable>

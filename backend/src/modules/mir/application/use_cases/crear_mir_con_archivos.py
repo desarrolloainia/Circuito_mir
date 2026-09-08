@@ -7,7 +7,7 @@ from modules.archivos.application.ports.file_storage import FileStoragePort
 from modules.archivos.application.uses_cases.subir_documento import subir_documento
 from modules.archivos.domain.Enum.estado_documetno import TipoDocumento
 from modules.archivos.domain.repository.documento_repository import DocumentoRepository
-from modules.mir.domain.entities.mir import Mir, Solucionado
+from modules.mir.domain.entities.mir import Mir, Prioridad, Solucionado
 from modules.mir.domain.repository.mir_repository import MirRepository
 from shared.uow import UnitOfWork
 
@@ -27,6 +27,7 @@ async def crear_mir_con_archivos(
     descripcion: str,
     solucionado: Solucionado,
     nombre_empresa: str,
+    prioridad: Prioridad,
     nombre_persona_empresa: str,
     telefono_empresa: int,
     codigo_cliente: str,
@@ -62,6 +63,7 @@ async def crear_mir_con_archivos(
                 solucionado=solucionado,
                 archivos_adjuntos=documentos,
                 nombre_empresa=nombre_empresa,
+                prioridad=prioridad,
                 nombre_persona_empresa=nombre_persona_empresa,
                 telefono_empresa=telefono_empresa,
                 codigo_cliente=codigo_cliente,

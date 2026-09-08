@@ -14,7 +14,7 @@ from modules.archivos.infrastructure.db.entities.documento import DocumentoORM
 from modules.archivos.infrastructure.db.persistence.documento_repository import (
     DocumentoRepositorySqlAlchemy,
 )
-from modules.mir.domain.entities.mir import Mir, Solucionado
+from modules.mir.domain.entities.mir import Mir, Prioridad, Solucionado
 from modules.mir.domain.repository.mir_repository import (
     DocumentoNoEncontradoError,
     DocumentoYaAsignadoError,
@@ -42,6 +42,7 @@ def mir(documentos: list[Documento], **cambios) -> Mir:
         solucionado=Solucionado.NO,
         archivos_adjuntos=documentos,
         nombre_empresa="Empresa",
+        prioridad=Prioridad.ALTA,
         nombre_persona_empresa="Ada",
         telefono_empresa=600123123,
         codigo_cliente="CLI-1",
@@ -52,7 +53,10 @@ def mir(documentos: list[Documento], **cambios) -> Mir:
 
 
 async def en_bd(ejercicio):
-    engine = create_async_engine(os.environ["DATABASE_URL"])
+    database_url = os.getenv("TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("TEST_DATABASE_URL es obligatoria para pruebas destructivas")
+    engine = create_async_engine(database_url)
 
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
@@ -68,7 +72,11 @@ def test_crud_carga_documentos_reemplaza_enlaces_y_conserva_documentos():
     async def ejercicio(factory):
         uow = UnitOfWork(factory)
         async with uow:
-            documentos = [documento("uno.pdf"), documento("dos.pdf"), documento("tres.pdf")]
+            documentos = [
+                documento("uno.pdf"),
+                documento("dos.pdf"),
+                documento("tres.pdf"),
+            ]
             docs = DocumentoRepositorySqlAlchemy(uow)
             repo = MirRepositorySqlAlchemy(uow)
             for doc in documentos:
@@ -94,8 +102,14 @@ def test_crud_carga_documentos_reemplaza_enlaces_y_conserva_documentos():
             await repo.delete_mir(creada.id)
             await uow.commit()
             assert await repo.get_mir_by_id(creada.id) is None
-            assert (await uow.session.scalar(select(func.count()).select_from(DocumentoORM))) == 3
-            assert (await uow.session.scalar(select(func.count()).select_from(mir_documentos))) == 0
+            assert (
+                await uow.session.scalar(select(func.count()).select_from(DocumentoORM))
+            ) == 3
+            assert (
+                await uow.session.scalar(
+                    select(func.count()).select_from(mir_documentos)
+                )
+            ) == 0
 
     run(en_bd(ejercicio))
 

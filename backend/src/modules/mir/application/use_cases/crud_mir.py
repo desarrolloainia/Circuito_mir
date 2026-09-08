@@ -2,7 +2,7 @@ from datetime import date
 from uuid import UUID
 
 from modules.archivos.domain.repository.documento_repository import DocumentoRepository
-from modules.mir.domain.entities.mir import Mir, Solucionado
+from modules.mir.domain.entities.mir import Mir, Prioridad, Solucionado
 from modules.mir.domain.repository.mir_repository import (
     DocumentoNoEncontradoError,
     MirNoEncontradaError,
@@ -11,9 +11,7 @@ from modules.mir.domain.repository.mir_repository import (
 from shared.uow import UnitOfWork
 
 
-async def obtener_mir(
-    mir_id: UUID, repositorio: MirRepository, uow: UnitOfWork
-) -> Mir:
+async def obtener_mir(mir_id: UUID, repositorio: MirRepository, uow: UnitOfWork) -> Mir:
     async with uow:
         mir = await repositorio.get_mir_by_id(mir_id)
         if mir is None:
@@ -32,6 +30,7 @@ async def actualizar_mir(
     descripcion: str,
     solucionado: Solucionado,
     nombre_empresa: str,
+    prioridad: Prioridad,
     nombre_persona_empresa: str,
     telefono_empresa: int,
     codigo_cliente: str,
@@ -58,6 +57,7 @@ async def actualizar_mir(
             solucionado=solucionado,
             archivos_adjuntos=documentos,
             nombre_empresa=nombre_empresa,
+            prioridad=prioridad,
             nombre_persona_empresa=nombre_persona_empresa,
             telefono_empresa=telefono_empresa,
             codigo_cliente=codigo_cliente,

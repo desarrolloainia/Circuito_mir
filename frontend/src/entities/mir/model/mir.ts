@@ -2,6 +2,7 @@ import type { components } from "@/types/api";
 
 export type TipoDocumento = components["schemas"]["TipoDocumento"];
 export type MirDTO = components["schemas"]["MirDTO"];
+export type Prioridad = components["schemas"]["Prioridad"];
 
 export type CrearMirInput = Omit<components["schemas"]["CrearMirDTO"], "tipos_documento">;
 
@@ -36,4 +37,12 @@ export const crearMir = (datos: CrearMirInput, archivos: File[] = []): Promise<M
   }
 
   return $fetch<MirDTO>("/mir", { baseURL: apiBase, method: "POST", body });
+};
+
+export const listarMir = (): Promise<MirDTO[]> => {
+  const {
+    public: { apiBase },
+  } = useRuntimeConfig();
+
+  return $fetch<MirDTO[]>("/mir", { baseURL: apiBase });
 };

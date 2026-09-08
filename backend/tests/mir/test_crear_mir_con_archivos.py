@@ -12,7 +12,7 @@ from modules.mir.application.use_cases.crear_mir_con_archivos import (
     AdjuntoMir,
     crear_mir_con_archivos,
 )
-from modules.mir.domain.entities.mir import Solucionado
+from modules.mir.domain.entities.mir import Prioridad, Solucionado
 
 
 def run(coroutine):
@@ -42,13 +42,16 @@ def ejecutar(*, upload_error=None, save_error=None, mir_error=None, commit_error
         subir=AsyncMock(side_effect=upload_error or (lambda *_: next(subidos))),
         eliminar=AsyncMock(),
     )
-    documentos = SimpleNamespace(save=AsyncMock(side_effect=save_error or (lambda x: x)))
+    documentos = SimpleNamespace(
+        save=AsyncMock(side_effect=save_error or (lambda x: x))
+    )
     mir_repo = SimpleNamespace(create_mir=AsyncMock(side_effect=mir_error))
     uow = UowStub(commit_error)
     llamada = crear_mir_con_archivos(
         descripcion="Fallo",
         solucionado=Solucionado.NO,
         nombre_empresa="Empresa",
+        prioridad=Prioridad.MEDIA,
         nombre_persona_empresa="Ada",
         telefono_empresa=600123123,
         codigo_cliente="CLI-1",
@@ -72,7 +75,10 @@ def test_crea_mir_y_confirma_una_vez():
 
     resultado = run(llamada)
 
-    assert [doc.storage_id for doc in resultado.archivos_adjuntos] == ["storage-1", "storage-2"]
+    assert [doc.storage_id for doc in resultado.archivos_adjuntos] == [
+        "storage-1",
+        "storage-2",
+    ]
     assert documentos.save.await_count == 2
     mir_repo.create_mir.assert_awaited_once_with(resultado)
     uow.commit.assert_awaited_once()

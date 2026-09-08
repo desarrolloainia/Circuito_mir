@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
-from modules.archivos.api.dto import DocumentoDTO, EditarDocumentoDTO
 from pydantic import ValidationError
 
+from modules.archivos.api.dto import DocumentoDTO, EditarDocumentoDTO
 from modules.archivos.application.ports.file_storage import (
     ArchivoSubido,
     FileStorageNotFoundError,
@@ -360,6 +360,7 @@ def test_documento_dto_acepta_entidad_de_dominio():
         "tipo": doc.tipo,
         "storage_id": doc.storage_id,
         "creado_por": doc.creado_por,
+        "creado_en": doc.creado_en,
     }
 
 
@@ -386,6 +387,7 @@ def test_repositorio_update_modifica_sin_commit():
         tipo=TipoDocumento.PDF,
         storage_id="storage-anterior",
         creado_por=doc.creado_por,
+        creado_en=doc.creado_en,
     )
     session = SimpleNamespace(get=AsyncMock(return_value=doc_orm))
     uow = SimpleNamespace(session=session, commit=AsyncMock())
@@ -406,6 +408,7 @@ def test_repositorio_get_by_id_y_get_all_devuelven_dominio():
             tipo=doc.tipo,
             storage_id=doc.storage_id,
             creado_por=doc.creado_por,
+            creado_en=doc.creado_en,
         )
         for doc in (documento(), documento())
     ]
@@ -430,6 +433,7 @@ def documento_desde_orm(value: DocumentoORM) -> Documento:
         tipo=value.tipo,
         storage_id=value.storage_id,
         creado_por=value.creado_por,
+        creado_en=value.creado_en,
     )
 
 

@@ -24,6 +24,7 @@ def _to_domain(mir: MirORM) -> Mir:
         solucionado=mir.solucionado,
         archivos_adjuntos=[to_domain(documento) for documento in mir.archivos_adjuntos],
         nombre_empresa=mir.nombre_empresa,
+        prioridad=mir.prioridad,
         nombre_persona_empresa=mir.nombre_persona_empresa,
         telefono_empresa=mir.telefono_empresa,
         codigo_cliente=mir.codigo_cliente,
@@ -78,6 +79,7 @@ class MirRepositorySqlAlchemy:
             solucionado=mir.solucionado,
             archivos_adjuntos=await self._documentos(mir),
             nombre_empresa=mir.nombre_empresa,
+            prioridad=mir.prioridad,
             nombre_persona_empresa=mir.nombre_persona_empresa,
             telefono_empresa=mir.telefono_empresa,
             codigo_cliente=mir.codigo_cliente,
@@ -113,6 +115,7 @@ class MirRepositorySqlAlchemy:
         mir_orm.descripcion = mir.descripcion
         mir_orm.solucionado = mir.solucionado
         mir_orm.nombre_empresa = mir.nombre_empresa
+        mir_orm.prioridad = mir.prioridad
         mir_orm.nombre_persona_empresa = mir.nombre_persona_empresa
         mir_orm.telefono_empresa = mir.telefono_empresa
         mir_orm.codigo_cliente = mir.codigo_cliente

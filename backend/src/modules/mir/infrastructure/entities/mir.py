@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from modules.archivos.infrastructure.db.entities.documento import DocumentoORM
-from modules.mir.domain.entities.mir import Solucionado
+from modules.mir.domain.entities.mir import Prioridad, Solucionado
 from shared.database import Base
 
 mir_documentos = Table(
@@ -40,6 +40,9 @@ class MirORM(Base):
         SqlEnum(Solucionado, name="solucionado"), nullable=False
     )
     nombre_empresa: Mapped[str] = mapped_column(String(255), nullable=False)
+    prioridad: Mapped[Prioridad] = mapped_column(
+        SqlEnum(Prioridad, name="prioridad"), nullable=False
+    )
     nombre_persona_empresa: Mapped[str] = mapped_column(String(255), nullable=False)
     telefono_empresa: Mapped[int] = mapped_column(BigInteger, nullable=False)
     codigo_cliente: Mapped[str] = mapped_column(String(100), nullable=False)

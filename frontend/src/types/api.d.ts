@@ -53,6 +53,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/archivos/{documento_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Eliminar Archivo */
+        delete: operations["eliminar_archivo_archivos__documento_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -64,6 +81,7 @@ export interface components {
             solucionado: components["schemas"]["Solucionado"];
             /** Nombre Empresa */
             nombre_empresa: string;
+            prioridad: components["schemas"]["Prioridad"];
             /** Nombre Persona Empresa */
             nombre_persona_empresa: string;
             /** Telefono Empresa */
@@ -94,6 +112,7 @@ export interface components {
             solucionado: components["schemas"]["Solucionado"];
             /** Nombre Empresa */
             nombre_empresa: string;
+            prioridad: components["schemas"]["Prioridad"];
             /** Nombre Persona Empresa */
             nombre_persona_empresa: string;
             /** Telefono Empresa */
@@ -127,6 +146,11 @@ export interface components {
              * Format: uuid
              */
             creado_por: string;
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -147,6 +171,7 @@ export interface components {
             archivos_adjuntos: components["schemas"]["DocumentoDTO"][];
             /** Nombre Empresa */
             nombre_empresa: string;
+            prioridad: components["schemas"]["Prioridad"];
             /** Nombre Persona Empresa */
             nombre_persona_empresa: string;
             /** Telefono Empresa */
@@ -161,6 +186,11 @@ export interface components {
              */
             fecha_deteccion: string;
         };
+        /**
+         * Prioridad
+         * @enum {string}
+         */
+        Prioridad: "alta" | "media" | "baja";
         /**
          * Solucionado
          * @enum {string}
@@ -357,6 +387,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentoDTO"][];
+                };
+            };
+        };
+    };
+    eliminar_archivo_archivos__documento_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documento_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

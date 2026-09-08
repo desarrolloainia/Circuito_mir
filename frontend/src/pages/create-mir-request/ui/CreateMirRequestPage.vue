@@ -6,11 +6,13 @@ import type { CrearMirInput } from "@/entities/mir";
 import { formatDate } from "@/shared/lib";
 
 type ResolutionAnswer = "Sí" | "No";
+type Priority = CrearMirInput["prioridad"];
 
 interface MirRequestFormState {
   detectionDate: CalendarDate;
   description: string;
   resolved: ResolutionAnswer;
+  priority: Priority;
   attachments: File[];
   company: string;
   contactPerson: string;
@@ -21,6 +23,11 @@ interface MirRequestFormState {
 
 const maximumDetectionDate = today(getLocalTimeZone());
 const resolutionItems: ResolutionAnswer[] = ["No", "Sí"];
+const priorityItems: Array<{ label: string; value: Priority }> = [
+  { label: "Baja", value: "baja" },
+  { label: "Media", value: "media" },
+  { label: "Alta", value: "alta" },
+];
 const calendarOpen = ref<boolean>(false);
 const toast = useToast();
 
@@ -28,6 +35,7 @@ const formState = shallowReactive<MirRequestFormState>({
   detectionDate: maximumDetectionDate,
   description: "",
   resolved: "No",
+  priority: "baja",
   attachments: [],
   company: "",
   contactPerson: "",
@@ -40,6 +48,7 @@ const submitRequest = async (): Promise<void> => {
   const input: CrearMirInput = {
     descripcion: formState.description.trim(),
     solucionado: formState.resolved === "Sí" ? "si" : "no",
+    prioridad: formState.priority,
     nombre_empresa: formState.company.trim(),
     nombre_persona_empresa: formState.contactPerson.trim(),
     telefono_empresa: Number(formState.phone.replace(/\D/g, "")),
@@ -128,6 +137,11 @@ const submitRequest = async (): Promise<void> => {
 
                 <UFormField label="¿Está solucionada ya la M.I.R?" name="resolved" required>
                   <USelect v-model="formState.resolved" :items="resolutionItems" icon="i-lucide-circle-check-big"
+                    size="lg" class="w-full sm:w-48" required />
+                </UFormField>
+
+                <UFormField label="Prioridad" name="priority" required>
+                  <USelect v-model="formState.priority" :items="priorityItems" icon="i-lucide-flag"
                     size="lg" class="w-full sm:w-48" required />
                 </UFormField>
 

@@ -1,5 +1,7 @@
 import uuid
+from datetime import datetime
 
+from sqlalchemy import DateTime
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -20,3 +22,6 @@ class DocumentoORM(Base):
     )
     storage_id: Mapped[str] = mapped_column(nullable=False)
     creado_por: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    creado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
